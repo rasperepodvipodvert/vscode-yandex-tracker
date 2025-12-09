@@ -1,55 +1,295 @@
+/* Base styles */
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-editor-foreground);
+    background: var(--vscode-editor-background);
+    padding: 20px;
+    line-height: 1.5;
+}
+
+/* Loading state */
+.Loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* Main layout */
 .Issue {
     display: flex;
+    gap: 40px;
+    max-width: 1400px;
 }
 
 .Issue > .Main {
-    width: 70%;    
+    flex: 1;
+    min-width: 0;
 }
 
 .Issue > .Sidebar {
-    margin-left: 40px;
+    width: 280px;
+    flex-shrink: 0;
 }
 
-.Main > .Meta {
+/* Header */
+.Header {
     display: flex;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-bottom: 1px solid white;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
-.Main > .Description {
-    margin-top: 10px;
-    border-bottom: 1px solid white;
-    padding-top: 40px;
-    padding-bottom: 40px;
+.IssueKey {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
 }
 
-.Description div {
-    color: var(--vscode-editor-foreground) !important;
+.IssueKey:hover {
+    text-decoration: underline;
 }
 
-.Meta > .Item {
-    margin-left: 5px;     
-    margin-right: 5px;     
+/* Status badge */
+.StatusBadge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
 }
 
-.Comments > .Comment {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-bottom: 1px solid white;
+.StatusBadge.small {
+    padding: 2px 8px;
+    font-size: 11px;
 }
 
-.Author {
-    font-weight: bold;
-    margin-bottom: 5px;
+/* Summary */
+.Summary {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    line-height: 1.3;
+    color: var(--vscode-editor-foreground);
 }
 
-.Author::first-letter {
-    color: red;
+/* Meta row */
+.MetaRow {
+    display: flex;
+    gap: 24px;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--vscode-widget-border);
 }
 
-.Sidebar td {
-    padding-bottom: 10px;
+.MetaItem {
+    font-size: 13px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.MetaLabel {
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.8;
+}
+
+/* Sections */
+.Section {
+    margin-bottom: 32px;
+}
+
+.SectionTitle {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-widget-border);
+    color: var(--vscode-editor-foreground);
+}
+
+/* Description and markdown */
+.Description {
+    padding: 16px;
+    background: var(--vscode-textBlockQuote-background);
+    border-radius: 6px;
+    border-left: 3px solid var(--vscode-textLink-foreground);
+}
+
+.markdown-body {
+    color: var(--vscode-editor-foreground);
+}
+
+.markdown-body p {
+    margin: 0 0 12px 0;
+}
+
+.markdown-body p:last-child {
+    margin-bottom: 0;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+    margin: 16px 0 8px 0;
+    font-weight: 600;
+}
+
+.markdown-body a {
+    color: var(--vscode-textLink-foreground);
+}
+
+.markdown-body code {
+    background: var(--vscode-textCodeBlock-background);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: 0.9em;
+}
+
+.markdown-body pre {
+    background: var(--vscode-textCodeBlock-background);
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+.markdown-body pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-body ul, .markdown-body ol {
+    margin: 8px 0;
+    padding-left: 24px;
+}
+
+.markdown-body blockquote {
+    border-left: 3px solid var(--vscode-textBlockQuote-border);
+    margin: 8px 0;
+    padding-left: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 8px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Comments */
+.Comments {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.Comment {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--vscode-widget-border);
+}
+
+.CommentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-widget-border);
+}
+
+.CommentAuthor {
+    font-weight: 600;
+    color: var(--vscode-textLink-foreground);
+}
+
+.CommentDate {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.CommentBody {
+    font-size: 14px;
+}
+
+/* Sidebar */
+.SidebarSection {
+    background: var(--vscode-sideBar-background);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--vscode-widget-border);
+}
+
+.SidebarItem {
+    margin-bottom: 16px;
+}
+
+.SidebarItem:last-child {
+    margin-bottom: 0;
+}
+
+.SidebarLabel {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 4px;
+}
+
+.SidebarValue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--vscode-editor-foreground);
+}
+
+/* Priority dot */
+.PriorityDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Person value */
+.PersonValue {
+    font-weight: 500;
+}
+
+/* Followers list */
+.FollowersList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .Issue {
+        flex-direction: column;
+    }
+
+    .Issue > .Sidebar {
+        width: 100%;
+        order: -1;
+    }
+
+    .SidebarSection {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .SidebarItem {
+        margin-bottom: 0;
+        min-width: 120px;
+    }
 }

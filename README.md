@@ -60,6 +60,14 @@ Use the collapse/expand button to collapse or expand all groups at once.
 
 Sorting and grouping settings are saved per panel and restored after VS Code restart.
 
+### Create Branch from Issue
+
+Right-click on any issue or click the git branch icon to create a new git branch. The branch name is automatically generated from the issue key and transliterated summary:
+
+- `TASK-123` with summary "Добавить авторизацию" → `TASK-123-dobavit-avtorizatsiyu`
+
+You can edit the branch name before creation.
+
 ### Issue Panel
 
 Click on any issue to open a detailed view with:

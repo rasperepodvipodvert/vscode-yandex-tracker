@@ -17,7 +17,7 @@
 		"email": "rus.nasonov@gmal.com",
 		"url": "https://rusnasonov.com"
 	},
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -66,6 +66,12 @@
 			{
 				"command": "vscode-yandex-tracker.openIssue",
 				"title": "Open Issue",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.createBranch",
+				"title": "Create Branch from Issue",
+				"icon": "$(git-branch)",
 				"category": "Yandex.Tracker"
 			},
 			{
@@ -285,6 +291,18 @@
 				{
 					"command": "vscode-yandex-tracker.expandCustomView",
 					"when": "view == custom && yandexTracker.custom.collapsed",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "vscode-yandex-tracker.createBranch",
+					"when": "viewItem == issue",
+					"group": "inline"
+				},
+				{
+					"command": "vscode-yandex-tracker.createBranch",
+					"when": "viewItem == issue",
 					"group": "navigation"
 				}
 			]

@@ -278,6 +278,7 @@ export class IssuesProvider implements vscode.TreeDataProvider<TreeElement> {
             tooltip: await issue.description(),
             iconPath: priority ? getPriorityIcon(priority) : this.resource.icons.Tracker,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
+            contextValue: 'issue',
             command: {
                 command: 'vscode-yandex-tracker.openIssue',
                 title: 'Open Issue',

@@ -5,6 +5,7 @@ import { IssuesProvider, SortBy, GroupBy } from './views/issuesTree';
 import { Tracker } from './api';
 import { IssuePanel } from './views/issuePanel';
 import { Resource } from './resource';
+import { createBranchName } from './utils/transliterate';
 
 import axios from 'axios';
 
@@ -162,6 +163,65 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         await tracker.me(); // check that credentials is valid
         issuePanel.show(number);
+    });
+    vscode.commands.registerCommand(`${extensionId}.createBranch`, async (arg: any) => {
+        let issueKey: string;
+        let summary: string;
+
+        // Handle both Issue object (from context menu) and string (from command palette)
+        if (arg && typeof arg.number === 'function') {
+            // It's an Issue object from context menu
+            issueKey = arg.number();
+            summary = await arg.description();
+        } else if (typeof arg === 'string') {
+            issueKey = arg;
+            const issues = await tracker.issues();
+            const issue = issues.get(issueKey);
+            summary = await issue.description();
+        } else {
+            const inputKey = await vscode.window.showInputBox({ placeHolder: 'Enter issue key (e.g., TASK-123)' });
+            if (inputKey === undefined || inputKey === '') {
+                vscode.window.showErrorMessage('Issue key is required');
+                return;
+            }
+            issueKey = inputKey;
+            const issues = await tracker.issues();
+            const issue = issues.get(issueKey);
+            summary = await issue.description();
+        }
+
+        try {
+            const branchName = createBranchName(issueKey, summary);
+
+            const gitExtension = vscode.extensions.getExtension('vscode.git');
+            if (!gitExtension) {
+                vscode.window.showErrorMessage('Git extension is not available');
+                return;
+            }
+
+            const git = gitExtension.exports.getAPI(1);
+            const repo = git.repositories[0];
+
+            if (!repo) {
+                vscode.window.showErrorMessage('No git repository found');
+                return;
+            }
+
+            const confirmBranchName = await vscode.window.showInputBox({
+                prompt: 'Branch name',
+                value: branchName,
+                placeHolder: 'Enter branch name'
+            });
+
+            if (confirmBranchName === undefined || confirmBranchName === '') {
+                return;
+            }
+
+            await repo.createBranch(confirmBranchName, true);
+            vscode.window.showInformationMessage(`Created and switched to branch: ${confirmBranchName}`);
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`Failed to create branch: ${error.message}`);
+        }
     });
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration(`${extensionId}`)) {

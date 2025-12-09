@@ -1,35 +1,30 @@
-//@ts-ignore
 import * as vscode from 'vscode';
-import { keychain } from "./keychain";
 
-class BaseError extends Error {
-    constructor(m: string) {
-        super(m);
-        Object.setPrototypeOf(this, BaseError.prototype);
-    }
-}
-
-export class SecretNotFound extends BaseError { }
+const TOKEN_KEY = 'yandex-tracker-oauth-token';
 
 export class Credentials {
-    private extensionId: string;
-
+    private secretStorage: vscode.SecretStorage;
     private host: string;
 
-    constructor(extensionId: string, host: string) {
-        this.extensionId = extensionId;
+    constructor(context: vscode.ExtensionContext, host: string) {
+        this.secretStorage = context.secrets;
         this.host = host;
     }
 
+    private getKey(): string {
+        return `${TOKEN_KEY}:${this.host}`;
+    }
+
     async token(): Promise<string | null> {
-        return await keychain!.getPassword(this.extensionId, this.host);
+        const token = await this.secretStorage.get(this.getKey());
+        return token ?? null;
     }
 
-    async save(token: string) {
-        await keychain!.setPassword(this.extensionId, this.host, token);
+    async save(token: string): Promise<void> {
+        await this.secretStorage.store(this.getKey(), token);
     }
 
-    async clean() {
-        await keychain!.deletePassword(this.extensionId, this.host);
+    async clean(): Promise<void> {
+        await this.secretStorage.delete(this.getKey());
     }
 }

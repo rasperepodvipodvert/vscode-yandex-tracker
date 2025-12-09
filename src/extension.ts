@@ -10,21 +10,21 @@ import axios from 'axios';
 
 export async function activate(context: vscode.ExtensionContext) {
     const extensionId = 'vscode-yandex-tracker';
-    const trackerHost = vscode.Uri.parse(vscode.workspace.getConfiguration(extensionId).get<string>('host') || '');
-    const orgID = vscode.workspace.getConfiguration(extensionId).get<string>('organizationId') || '';
-    const customQuery = vscode.workspace.getConfiguration(extensionId).get<string>('query') || '';
+    const config = vscode.workspace.getConfiguration(extensionId);
+    const trackerHost = vscode.Uri.parse(config.get<string>('host') || '');
+    const customQuery = config.get<string>('query') || '';
     const resource = new Resource(context);
-    const credentials = new Credentials(`${extensionId}`, trackerHost.authority);
+    const credentials = new Credentials(context, trackerHost.authority);
 
-    const token = await credentials.token();
-    if (token === null) {
-        vscode.window.showInformationMessage(`Set OAuth token for host ${trackerHost.toString()}`, 'Setup Token').then((value: string) => {
-            if (value !== undefined) {
-                vscode.commands.executeCommand(`${extensionId}.setOAuthToken`);
+    const cookie = await credentials.token();
+    if (cookie === null) {
+        vscode.window.showInformationMessage(`Set Cookie for host ${trackerHost.toString()}`, 'Setup Cookie').then((value) => {
+            if (value) {
+                vscode.commands.executeCommand(`${extensionId}.setCookie`);
             }
         });
     }
-    const tracker = new Tracker(axios.create(), trackerHost.toString(), token || '', orgID);
+    const tracker = new Tracker(axios.create(), trackerHost.toString(), cookie || '');
     const issuePanel = new IssuePanel(context, tracker);
     const assignToMeView = new IssuesProvider(tracker, resource, 'Resolution: empty() and Assignee: me()');
     const followedByMe = new IssuesProvider(tracker, resource, 'Resolution: empty() and Followers: me()');
@@ -42,15 +42,15 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(`${extensionId}.moreFollowedByMeView`, () => followedByMe.loadMore());
     vscode.commands.registerCommand(`${extensionId}.moreCustomView`, () => custom.loadMore());
 
-    vscode.commands.registerCommand(`${extensionId}.setOAuthToken`, async () => {
-        const tkn = await vscode.window.showInputBox({placeHolder: 'Set OAuth token'});
-        if(tkn === undefined) {
-            vscode.window.showErrorMessage('Token can\'t be empty');
+    vscode.commands.registerCommand(`${extensionId}.setCookie`, async () => {
+        const cookieValue = await vscode.window.showInputBox({placeHolder: 'Set Cookie (Session_id=...;sessionid2=...;yandexuid=...)'});
+        if(cookieValue === undefined || cookieValue === '') {
+            vscode.window.showErrorMessage('Cookie can\'t be empty');
             return;
         }
-        await credentials.save(tkn);
-        vscode.window.showInformationMessage(`Token saved for host ${trackerHost.authority}`, 'Reload window').then((value: string) => {
-            if (value !== undefined) {
+        await credentials.save(cookieValue);
+        vscode.window.showInformationMessage(`Cookie saved for host ${trackerHost.authority}`, 'Reload window').then((value) => {
+            if (value) {
                 vscode.commands.executeCommand('workbench.action.reloadWindow');
             }
         });
@@ -68,8 +68,8 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration(`${extensionId}`)) {
-           vscode.window.showInformationMessage('Configuration changed', 'Reload window').then((value: string) => {
-               if (value !== undefined) {
+           vscode.window.showInformationMessage('Configuration changed', 'Reload window').then((value) => {
+               if (value) {
                    vscode.commands.executeCommand('workbench.action.reloadWindow');
                }
            });

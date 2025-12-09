@@ -1,21 +1,26 @@
 import { AxiosInstance } from 'axios';
 
+interface CookieAuthData {
+    iamToken: string;
+    cloudOrgId: string;
+    expiresAt: number;
+}
+
 export class Tracker {
     private _client: AxiosInstance;
 
     private host: string;
 
-    private token: string;
-
-    private orgId: string;
+    private cookie: string;
 
     private frontByHost: Map<string, string>;
 
-    constructor(client: AxiosInstance, host: string, token: string, orgId: string = '') {
+    private cookieAuthData: CookieAuthData | null = null;
+
+    constructor(client: AxiosInstance, host: string, cookie: string) {
         this._client = client;
         this.host = host;
-        this.token = token;
-        this.orgId = orgId;
+        this.cookie = cookie;
         this.frontByHost = new Map<string, string>([
             ['https://api.tracker.yandex.net/', 'https://tracker.yandex.ru'],
             ['https://st-api.test.yandex-team.ru/', 'https://st.test.yandex-team.ru'],
@@ -23,15 +28,60 @@ export class Tracker {
         ]);
     }
 
-    private client(): AxiosInstance {
+    private async fetchIamTokenFromCookies(): Promise<CookieAuthData> {
+        const frontUrl = this.front();
+        const response = await this._client.get(frontUrl, {
+            headers: {
+                'Cookie': this.cookie
+            },
+            maxRedirects: 5
+        });
+
+        const html = response.data as string;
+        const match = html.match(/window\.__PRELOADED_STATE__\s*=\s*(\{[\s\S]*?\});/);
+        if (!match) {
+            throw new Error('Could not find __PRELOADED_STATE__ in response');
+        }
+
+        const preloadedState = JSON.parse(match[1]);
+        const iamToken = preloadedState?.user?.iamToken;
+        const cloudOrgId = preloadedState?.user?.organizationIds?.cloudOrgId;
+
+        if (!iamToken) {
+            throw new Error('Could not extract IAM token from cookies. Please re-login to Tracker in browser.');
+        }
+
+        return {
+            iamToken,
+            cloudOrgId: cloudOrgId || '',
+            expiresAt: Date.now() + 10 * 60 * 1000 // Cache for 10 minutes
+        };
+    }
+
+    private async getAuthData(): Promise<{ token: string; orgId: string }> {
+        if (!this.cookieAuthData || Date.now() > this.cookieAuthData.expiresAt) {
+            this.cookieAuthData = await this.fetchIamTokenFromCookies();
+        }
+        return {
+            token: this.cookieAuthData.iamToken,
+            orgId: this.cookieAuthData.cloudOrgId
+        };
+    }
+
+    private async client(): Promise<AxiosInstance> {
         this._client.defaults.baseURL = `${this.host}v2`;
-        this._client.defaults.headers.common['Authorization'] = `OAuth ${this.token}`;
-        this._client.defaults.headers.common['X-Org-Id'] = this.orgId;
+
+        const authData = await this.getAuthData();
+
+        this._client.defaults.headers.common['Authorization'] = `Bearer ${authData.token}`;
+        this._client.defaults.headers.common['X-Cloud-Org-Id'] = authData.orgId;
+        delete this._client.defaults.headers.common['Cookie'];
+
         return this._client;
     }
 
-    issues(): Issues {
-        return new Issues(this.client());
+    async issues(): Promise<Issues> {
+        return new Issues(await this.client());
     }
 
     front(): string {
@@ -42,9 +92,63 @@ export class Tracker {
     }
 
     async me(): Promise<User> {
-        const response= await this.client().get('/myself');
+        const client = await this.client();
+        const response = await client.get('/myself');
         let data: RawUser = response.data;
-        return new User(this.client(), data.uid);
+        return new User(client, data.uid);
+    }
+
+    async fetchAttachment(url: string): Promise<string> {
+        const frontUrl = this.front();
+
+        // Handle both relative and absolute URLs
+        let fullUrl = url;
+        if (url.startsWith('/')) {
+            fullUrl = frontUrl + url;
+        }
+
+        try {
+            const response = await this._client.get(fullUrl, {
+                responseType: 'arraybuffer',
+                headers: {
+                    'Cookie': this.cookie
+                },
+                maxRedirects: 5
+            });
+
+            const contentType = response.headers['content-type'] || 'image/png';
+            const buffer = Buffer.from(response.data);
+
+            // Check if response is actually an image (not HTML error page)
+            const isHtml = contentType.includes('text/html') ||
+                buffer.toString('utf8', 0, 100).includes('<!DOCTYPE') ||
+                buffer.toString('utf8', 0, 100).includes('<html');
+
+            if (isHtml) {
+                console.error('Attachment returned HTML instead of image:', fullUrl);
+                return '';
+            }
+
+            const base64 = buffer.toString('base64');
+            return `data:${contentType};base64,${base64}`;
+        } catch (error) {
+            console.error('Failed to fetch attachment:', fullUrl, error);
+            return '';
+        }
+    }
+
+    async fetchAttachments(urls: string[]): Promise<Map<string, string>> {
+        const result = new Map<string, string>();
+
+        const promises = urls.map(async (url) => {
+            const dataUrl = await this.fetchAttachment(url);
+            if (dataUrl) {
+                result.set(url, dataUrl);
+            }
+        });
+
+        await Promise.all(promises);
+        return result;
     }
 }
 
@@ -170,7 +274,13 @@ export class Issues {
                 {params: {page: page, perPage: perPage}}
             );
             yield * response.data.map((item: RawIssue) => {
-                return new Issue(this.client, item.key, item.summary);
+                return new Issue(
+                    this.client,
+                    item.key,
+                    item.summary,
+                    item.priority?.key,
+                    item.status?.key
+                );
             });
             if (!response.headers.link.includes('rel="next"')){
                 break;
@@ -188,16 +298,28 @@ export class Issue {
     // @ts-ignore
     private client: AxiosInstance;
     private num: string;
-    private dsc:string;
+    private dsc: string;
+    private _priority: string;
+    private _status: string;
 
-    constructor(client: AxiosInstance, number: string, title: string = '') {
+    constructor(client: AxiosInstance, number: string, title: string = '', priority: string = '', status: string = '') {
         this.client = client;
         this.num = number;
         this.dsc = title;
+        this._priority = priority;
+        this._status = status;
     }
 
     number(): string {
         return this.num;
+    }
+
+    priority(): string {
+        return this._priority;
+    }
+
+    status(): string {
+        return this._status;
     }
 
     async description(): Promise<string> {

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { Credentials } from './credentials';
-import { IssuesProvider, SortBy } from './views/issuesTree';
+import { IssuesProvider, SortBy, GroupBy } from './views/issuesTree';
 import { Tracker } from './api';
 import { IssuePanel } from './views/issuePanel';
 import { Resource } from './resource';
@@ -26,17 +26,26 @@ export async function activate(context: vscode.ExtensionContext) {
     }
     const tracker = new Tracker(axios.create(), trackerHost.toString(), cookie || '');
     const issuePanel = new IssuePanel(context, tracker);
-    const assignToMeView = new IssuesProvider(tracker, resource, 'Resolution: empty() and Assignee: me()');
-    const followedByMe = new IssuesProvider(tracker, resource, 'Resolution: empty() and Followers: me()');
-    const custom = new IssuesProvider(tracker, resource, customQuery);
+    const assignToMeView = new IssuesProvider(tracker, resource, 'Resolution: empty() and Assignee: me()', 'assigned-to-me', context.globalState);
+    const followedByMe = new IssuesProvider(tracker, resource, 'Resolution: empty() and Followers: me()', 'followed-by-me', context.globalState);
+    const custom = new IssuesProvider(tracker, resource, customQuery, 'custom', context.globalState);
 
     vscode.window.registerTreeDataProvider('assigned-to-me', assignToMeView);
     vscode.window.registerTreeDataProvider('followed-by-me', followedByMe);
     vscode.window.registerTreeDataProvider('custom', custom);
 
-    vscode.commands.registerCommand(`${extensionId}.refreshAssignToMeView`, () => assignToMeView.refresh());
-    vscode.commands.registerCommand(`${extensionId}.refreshFollowedByMeView`, () => followedByMe.refresh());
-    vscode.commands.registerCommand(`${extensionId}.refreshCustomView`, () => custom.refresh());
+    vscode.commands.registerCommand(`${extensionId}.refreshAssignToMeView`, () => {
+        assignToMeView.refresh();
+        vscode.commands.executeCommand('setContext', 'yandexTracker.assignedToMe.collapsed', false);
+    });
+    vscode.commands.registerCommand(`${extensionId}.refreshFollowedByMeView`, () => {
+        followedByMe.refresh();
+        vscode.commands.executeCommand('setContext', 'yandexTracker.followedByMe.collapsed', false);
+    });
+    vscode.commands.registerCommand(`${extensionId}.refreshCustomView`, () => {
+        custom.refresh();
+        vscode.commands.executeCommand('setContext', 'yandexTracker.custom.collapsed', false);
+    });
 
     vscode.commands.registerCommand(`${extensionId}.moreAssignToMeView`, () => assignToMeView.loadMore());
     vscode.commands.registerCommand(`${extensionId}.moreFollowedByMeView`, () => followedByMe.loadMore());
@@ -71,6 +80,64 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(`${extensionId}.sortAssignToMeView`, () => showSortPicker(assignToMeView));
     vscode.commands.registerCommand(`${extensionId}.sortFollowedByMeView`, () => showSortPicker(followedByMe));
     vscode.commands.registerCommand(`${extensionId}.sortCustomView`, () => showSortPicker(custom));
+
+    // Group commands
+    const showGroupPicker = async (provider: IssuesProvider) => {
+        const groupOptions: { label: string; value: GroupBy; description?: string }[] = [
+            { label: '$(list-flat) No grouping', value: 'none', description: 'Flat list' },
+            { label: '$(symbol-enum) Group by Status', value: 'status', description: 'Open, In Progress, etc.' },
+            { label: '$(flame) Group by Priority', value: 'priority', description: 'Blocker, Critical, etc.' }
+        ];
+
+        const currentGroup = provider.getGroupBy();
+        const items = groupOptions.map(opt => ({
+            ...opt,
+            picked: opt.value === currentGroup
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select grouping',
+            title: 'Group Issues'
+        });
+
+        if (selected) {
+            provider.setGroupBy(selected.value);
+        }
+    };
+
+    vscode.commands.registerCommand(`${extensionId}.groupAssignToMeView`, () => showGroupPicker(assignToMeView));
+    vscode.commands.registerCommand(`${extensionId}.groupFollowedByMeView`, () => showGroupPicker(followedByMe));
+    vscode.commands.registerCommand(`${extensionId}.groupCustomView`, () => showGroupPicker(custom));
+
+    // Collapse/Expand commands - use VS Code's native functionality with context tracking
+    vscode.commands.executeCommand('setContext', 'yandexTracker.assignedToMe.collapsed', false);
+    vscode.commands.executeCommand('setContext', 'yandexTracker.followedByMe.collapsed', false);
+    vscode.commands.executeCommand('setContext', 'yandexTracker.custom.collapsed', false);
+
+    vscode.commands.registerCommand(`${extensionId}.collapseAssignToMeView`, () => {
+        vscode.commands.executeCommand('workbench.actions.treeView.assigned-to-me.collapseAll');
+        vscode.commands.executeCommand('setContext', 'yandexTracker.assignedToMe.collapsed', true);
+    });
+    vscode.commands.registerCommand(`${extensionId}.expandAssignToMeView`, () => {
+        assignToMeView.expandAll();
+        vscode.commands.executeCommand('setContext', 'yandexTracker.assignedToMe.collapsed', false);
+    });
+    vscode.commands.registerCommand(`${extensionId}.collapseFollowedByMeView`, () => {
+        vscode.commands.executeCommand('workbench.actions.treeView.followed-by-me.collapseAll');
+        vscode.commands.executeCommand('setContext', 'yandexTracker.followedByMe.collapsed', true);
+    });
+    vscode.commands.registerCommand(`${extensionId}.expandFollowedByMeView`, () => {
+        followedByMe.expandAll();
+        vscode.commands.executeCommand('setContext', 'yandexTracker.followedByMe.collapsed', false);
+    });
+    vscode.commands.registerCommand(`${extensionId}.collapseCustomView`, () => {
+        vscode.commands.executeCommand('workbench.actions.treeView.custom.collapseAll');
+        vscode.commands.executeCommand('setContext', 'yandexTracker.custom.collapsed', true);
+    });
+    vscode.commands.registerCommand(`${extensionId}.expandCustomView`, () => {
+        custom.expandAll();
+        vscode.commands.executeCommand('setContext', 'yandexTracker.custom.collapsed', false);
+    });
 
     vscode.commands.registerCommand(`${extensionId}.setCookie`, async () => {
         const cookieValue = await vscode.window.showInputBox({placeHolder: 'Set Cookie (Session_id=...;sessionid2=...;yandexuid=...)'});

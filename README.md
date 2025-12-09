@@ -47,6 +47,19 @@ Click the filter icon in any panel header to sort issues by:
 - **Created** — newest first
 - **Updated** — recently updated first
 
+### Grouping
+
+Click the tree icon to group issues by:
+- **No grouping** — flat list
+- **Status** — Open, In Progress, Testing, etc.
+- **Priority** — Blocker, Critical, Normal, etc.
+
+Use the collapse/expand button to collapse or expand all groups at once.
+
+### State Persistence
+
+Sorting and grouping settings are saved per panel and restored after VS Code restart.
+
 ### Issue Panel
 
 Click on any issue to open a detailed view with:

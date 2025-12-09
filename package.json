@@ -17,7 +17,7 @@
 		"email": "rus.nasonov@gmal.com",
 		"url": "https://rusnasonov.com"
 	},
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -139,6 +139,60 @@
 				"title": "Sort Custom Query",
 				"icon": "$(list-filter)",
 				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.groupAssignToMeView",
+				"title": "Group Assigned To Me",
+				"icon": "$(list-tree)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.groupFollowedByMeView",
+				"title": "Group Followed By Me",
+				"icon": "$(list-tree)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.groupCustomView",
+				"title": "Group Custom Query",
+				"icon": "$(list-tree)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.collapseAssignToMeView",
+				"title": "Collapse All",
+				"icon": "$(collapse-all)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.collapseFollowedByMeView",
+				"title": "Collapse All",
+				"icon": "$(collapse-all)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.collapseCustomView",
+				"title": "Collapse All",
+				"icon": "$(collapse-all)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.expandAssignToMeView",
+				"title": "Expand All",
+				"icon": "$(expand-all)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.expandFollowedByMeView",
+				"title": "Expand All",
+				"icon": "$(expand-all)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.expandCustomView",
+				"title": "Expand All",
+				"icon": "$(expand-all)",
+				"category": "Yandex.Tracker"
 			}
 		],
 		"menus": {
@@ -186,6 +240,51 @@
 				{
 					"command": "vscode-yandex-tracker.sortCustomView",
 					"when": "view == custom",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.groupAssignToMeView",
+					"when": "view == assigned-to-me",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.groupFollowedByMeView",
+					"when": "view == followed-by-me",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.groupCustomView",
+					"when": "view == custom",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.collapseAssignToMeView",
+					"when": "view == assigned-to-me && !yandexTracker.assignedToMe.collapsed",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.expandAssignToMeView",
+					"when": "view == assigned-to-me && yandexTracker.assignedToMe.collapsed",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.collapseFollowedByMeView",
+					"when": "view == followed-by-me && !yandexTracker.followedByMe.collapsed",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.expandFollowedByMeView",
+					"when": "view == followed-by-me && yandexTracker.followedByMe.collapsed",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.collapseCustomView",
+					"when": "view == custom && !yandexTracker.custom.collapsed",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.expandCustomView",
+					"when": "view == custom && yandexTracker.custom.collapsed",
 					"group": "navigation"
 				}
 			]

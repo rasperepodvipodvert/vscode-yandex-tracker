@@ -17,7 +17,7 @@
 		"email": "rus.nasonov@gmal.com",
 		"url": "https://rusnasonov.com"
 	},
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -121,6 +121,24 @@
 					"dark": "resources/dark/more.svg"
 				},
 				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.sortAssignToMeView",
+				"title": "Sort Assigned To Me",
+				"icon": "$(list-filter)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.sortFollowedByMeView",
+				"title": "Sort Followed By Me",
+				"icon": "$(list-filter)",
+				"category": "Yandex.Tracker"
+			},
+			{
+				"command": "vscode-yandex-tracker.sortCustomView",
+				"title": "Sort Custom Query",
+				"icon": "$(list-filter)",
+				"category": "Yandex.Tracker"
 			}
 		],
 		"menus": {
@@ -152,6 +170,21 @@
 				},
 				{
 					"command": "vscode-yandex-tracker.moreCustomView",
+					"when": "view == custom",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.sortAssignToMeView",
+					"when": "view == assigned-to-me",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.sortFollowedByMeView",
+					"when": "view == followed-by-me",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-yandex-tracker.sortCustomView",
 					"when": "view == custom",
 					"group": "navigation"
 				}

@@ -279,7 +279,9 @@ export class Issues {
                     item.key,
                     item.summary,
                     item.priority?.key,
-                    item.status?.key
+                    item.status?.key,
+                    item.createdAt,
+                    item.updatedAt
                 );
             });
             if (!response.headers.link.includes('rel="next"')){
@@ -301,13 +303,25 @@ export class Issue {
     private dsc: string;
     private _priority: string;
     private _status: string;
+    private _createdAt: string;
+    private _updatedAt: string;
 
-    constructor(client: AxiosInstance, number: string, title: string = '', priority: string = '', status: string = '') {
+    constructor(
+        client: AxiosInstance,
+        number: string,
+        title: string = '',
+        priority: string = '',
+        status: string = '',
+        createdAt: string = '',
+        updatedAt: string = ''
+    ) {
         this.client = client;
         this.num = number;
         this.dsc = title;
         this._priority = priority;
         this._status = status;
+        this._createdAt = createdAt;
+        this._updatedAt = updatedAt;
     }
 
     number(): string {
@@ -320,6 +334,14 @@ export class Issue {
 
     status(): string {
         return this._status;
+    }
+
+    createdAt(): string {
+        return this._createdAt;
+    }
+
+    updatedAt(): string {
+        return this._updatedAt;
     }
 
     async description(): Promise<string> {

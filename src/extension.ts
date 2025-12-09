@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { Credentials } from './credentials';
-import { IssuesProvider } from './views/issuesTree';
+import { IssuesProvider, SortBy } from './views/issuesTree';
 import { Tracker } from './api';
 import { IssuePanel } from './views/issuePanel';
 import { Resource } from './resource';
@@ -41,6 +41,36 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(`${extensionId}.moreAssignToMeView`, () => assignToMeView.loadMore());
     vscode.commands.registerCommand(`${extensionId}.moreFollowedByMeView`, () => followedByMe.loadMore());
     vscode.commands.registerCommand(`${extensionId}.moreCustomView`, () => custom.loadMore());
+
+    // Sort commands
+    const showSortPicker = async (provider: IssuesProvider) => {
+        const sortOptions: { label: string; value: SortBy; description?: string }[] = [
+            { label: '$(list-ordered) Default', value: 'default', description: 'API order' },
+            { label: '$(flame) Priority', value: 'priority', description: 'Blocker → Trivial' },
+            { label: '$(pulse) Status', value: 'status', description: 'Open → Closed' },
+            { label: '$(calendar) Created', value: 'createdAt', description: 'Newest first' },
+            { label: '$(history) Updated', value: 'updatedAt', description: 'Recently updated first' }
+        ];
+
+        const currentSort = provider.getSortBy();
+        const items = sortOptions.map(opt => ({
+            ...opt,
+            picked: opt.value === currentSort
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select sort order',
+            title: 'Sort Issues'
+        });
+
+        if (selected) {
+            provider.setSortBy(selected.value);
+        }
+    };
+
+    vscode.commands.registerCommand(`${extensionId}.sortAssignToMeView`, () => showSortPicker(assignToMeView));
+    vscode.commands.registerCommand(`${extensionId}.sortFollowedByMeView`, () => showSortPicker(followedByMe));
+    vscode.commands.registerCommand(`${extensionId}.sortCustomView`, () => showSortPicker(custom));
 
     vscode.commands.registerCommand(`${extensionId}.setCookie`, async () => {
         const cookieValue = await vscode.window.showInputBox({placeHolder: 'Set Cookie (Session_id=...;sessionid2=...;yandexuid=...)'});

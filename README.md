@@ -38,6 +38,15 @@ Three filters available: `Assigned To Me`, `Followed By Me`, `Custom Query`.
 
 `Custom Query` can be configured in Settings → `vscode-yandex-tracker.query`. See [Query Language](https://yandex.ru/tracker/support/user/query-filter.html).
 
+### Sorting
+
+Click the filter icon in any panel header to sort issues by:
+- **Default** — API order
+- **Priority** — Blocker → Trivial
+- **Status** — Open → Closed
+- **Created** — newest first
+- **Updated** — recently updated first
+
 ### Issue Panel
 
 Click on any issue to open a detailed view with:
